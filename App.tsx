@@ -4,6 +4,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Auth } from './components/Auth';
 import { Onboarding } from './components/Onboarding';
 import { ExerciseLibrary } from './components/ExerciseLibrary';
+import { RoutinesList } from './components/RoutinesList';
 import { Icon } from './components/Icons';
 
 const DashboardView = ({ profile }: { profile: any }) => (
@@ -83,21 +84,6 @@ const WorkoutView = () => (
   </div>
 );
 
-const RoutinesView = () => (
-  <div className="space-y-4">
-    <div className="flex justify-between items-end mb-2">
-      <h2 className="text-2xl font-bold">Gestão de Rotinas</h2>
-      <button className="bg-primary text-white p-2 rounded-lg">
-        <Icon name="Plus" className="w-5 h-5" />
-      </button>
-    </div>
-    
-    <div className="bg-surface/50 border border-slate-700 rounded-xl p-8 text-center text-slate-400">
-      <p>Aqui você poderá criar, editar e organizar os seus planos de treino.</p>
-    </div>
-  </div>
-);
-
 const MainApp: React.FC = () => {
   const { profile, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('/');
@@ -109,7 +95,7 @@ const MainApp: React.FC = () => {
       case '/workout':
         return <WorkoutView />;
       case '/routines':
-        return <RoutinesView />;
+        return <RoutinesList />;
       case '/exercises':
         return <ExerciseLibrary />;
       case '/profile':
