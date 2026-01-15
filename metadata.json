@@ -1,0 +1,5 @@
+{
+  "name": "IronTrack PWA",
+  "description": "A progressive web app for tracking weightlifting workouts, managing routines, and collaborating on a community exercise database.",
+  "requestFramePermissions": []
+}
