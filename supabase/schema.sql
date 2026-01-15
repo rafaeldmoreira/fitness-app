@@ -97,6 +97,17 @@ CREATE TABLE IF NOT EXISTS workout_logs (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
+-- Indexes for performance
+CREATE INDEX IF NOT EXISTS idx_exercises_created_by ON exercises(created_by);
+CREATE INDEX IF NOT EXISTS idx_routines_user_id ON routines(user_id);
+CREATE INDEX IF NOT EXISTS idx_routine_exercises_routine_id ON routine_exercises(routine_id);
+CREATE INDEX IF NOT EXISTS idx_routine_exercises_exercise_id ON routine_exercises(exercise_id);
+CREATE INDEX IF NOT EXISTS idx_workout_sessions_user_id ON workout_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_workout_sessions_routine_id ON workout_sessions(routine_id);
+CREATE INDEX IF NOT EXISTS idx_workout_logs_session_id ON workout_logs(session_id);
+CREATE INDEX IF NOT EXISTS idx_workout_logs_exercise_id ON workout_logs(exercise_id);
+
+
 -- SECURITY POLICIES (RLS)
 
 -- Enable RLS on all tables
