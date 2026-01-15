@@ -19,5 +19,9 @@ export const MOCK_STATS = [
 ];
 
 export const MUSCLE_GROUPS = [
-  'Peito', 'Costas', 'Pernas', 'Ombros', 'Bíceps', 'Tríceps', 'Abdómen', 'Cardio'
+  'Peito', 'Costas', 'Pernas', 'Ombros', 'Bíceps', 'Tríceps', 'Abdómen', 'Cardio', 'Corpo Inteiro'
+];
+
+export const EQUIPMENT_TYPES = [
+  'Peso do corpo', 'Halteres', 'Barra', 'Máquina', 'Cabos', 'Kettlebell', 'Elásticos', 'Outro'
 ];

@@ -1,4 +1,3 @@
-/// <reference types="vite/client" />
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '../types/types';
 
@@ -10,13 +9,18 @@ const getSupabaseConfig = () => {
 
   // 1. Try Vite import.meta.env (Standard Vite way)
   try {
+    // Cast to any to avoid TypeScript errors when vite/client types are missing
+    const env = (import.meta as any).env;
+
     // With envPrefix: ['VITE_', 'NEXT_PUBLIC_'] in vite.config.ts, 
     // these will be populated by Vercel's automatic env vars.
-    if (import.meta.env.VITE_SUPABASE_URL) url = import.meta.env.VITE_SUPABASE_URL;
-    else if (import.meta.env.NEXT_PUBLIC_SUPABASE_URL) url = import.meta.env.NEXT_PUBLIC_SUPABASE_URL;
-    
-    if (import.meta.env.VITE_SUPABASE_ANON_KEY) key = import.meta.env.VITE_SUPABASE_ANON_KEY;
-    else if (import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) key = import.meta.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    if (env) {
+      if (env.VITE_SUPABASE_URL) url = env.VITE_SUPABASE_URL;
+      else if (env.NEXT_PUBLIC_SUPABASE_URL) url = env.NEXT_PUBLIC_SUPABASE_URL;
+      
+      if (env.VITE_SUPABASE_ANON_KEY) key = env.VITE_SUPABASE_ANON_KEY;
+      else if (env.NEXT_PUBLIC_SUPABASE_ANON_KEY) key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+    }
   } catch (e) {
     // Ignore errors if import.meta is not defined
   }

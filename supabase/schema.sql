@@ -221,3 +221,27 @@ CREATE TRIGGER update_profiles_modtime BEFORE UPDATE ON profiles FOR EACH ROW EX
 
 DROP TRIGGER IF EXISTS update_routines_modtime ON routines;
 CREATE TRIGGER update_routines_modtime BEFORE UPDATE ON routines FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+-- STORAGE SETUP
+-- You must enable Storage in your Supabase Dashboard first.
+-- This SQL attempts to insert the bucket configuration.
+
+INSERT INTO storage.buckets (id, name, public) 
+VALUES ('exercise-media', 'exercise-media', true)
+ON CONFLICT (id) DO NOTHING;
+
+-- Storage Policies
+-- Allow public access to view images
+CREATE POLICY "Public Access" 
+  ON storage.objects FOR SELECT 
+  USING ( bucket_id = 'exercise-media' );
+
+-- Allow authenticated users to upload images
+CREATE POLICY "Authenticated Upload" 
+  ON storage.objects FOR INSERT 
+  WITH CHECK ( bucket_id = 'exercise-media' AND auth.role() = 'authenticated' );
+
+-- Allow users to update/delete their own uploads (optional, simplistic check based on owner)
+CREATE POLICY "Users manage own media"
+  ON storage.objects FOR ALL
+  USING ( bucket_id = 'exercise-media' AND auth.uid() = owner );

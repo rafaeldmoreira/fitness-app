@@ -26,6 +26,8 @@ export const Auth: React.FC = () => {
           email,
           password,
           options: {
+            // This ensures the link in the email points to the current domain (localhost or vercel app)
+            emailRedirectTo: `${window.location.origin}/`, 
             data: {
               username: email.split('@')[0], // Default username
             },
