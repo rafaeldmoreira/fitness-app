@@ -35,7 +35,7 @@ export const Onboarding: React.FC = () => {
           gender: formData.gender,
           experience_level: formData.experience_level,
           fitness_goal: formData.fitness_goal,
-        } as any)
+        })
         .eq('id', user.id);
 
       if (error) throw error;

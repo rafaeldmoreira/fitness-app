@@ -55,6 +55,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       exercises: {
         Row: {
@@ -93,6 +94,7 @@ export interface Database {
           is_verified?: boolean
           created_at?: string
         }
+        Relationships: []
       }
       routines: {
         Row: {
@@ -122,6 +124,7 @@ export interface Database {
           created_at?: string
           updated_at?: string
         }
+        Relationships: []
       }
       routine_exercises: {
         Row: {
@@ -154,6 +157,7 @@ export interface Database {
           rest_seconds?: number
           notes?: string | null
         }
+        Relationships: []
       }
       workout_sessions: {
         Row: {
@@ -183,6 +187,7 @@ export interface Database {
           end_time?: string | null
           notes?: string | null
         }
+        Relationships: []
       }
       workout_logs: {
         Row: {
@@ -218,6 +223,7 @@ export interface Database {
           completed?: boolean
           created_at?: string
         }
+        Relationships: []
       }
     }
   }

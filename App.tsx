@@ -11,7 +11,7 @@ const Icon = ({ name, className }: { name: string; className?: string }) => {
     Dumbbell: <path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1m0 0l3 3M7 7l3 3M17 17l3 3M5 5l2 2m4 4l2 2m-2-2l-4-4" />,
     List: <path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01" />,
     Search: <path d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />,
-    User: <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" />,
+    User: <><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" /><circle cx="12" cy="7" r="4" /></>,
     Plus: <path d="M12 5v14M5 12h14" />,
     LogOut: <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9" />
   };
