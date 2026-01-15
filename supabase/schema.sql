@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- 1. PROFILES TABLE
 -- Extends auth.users with public profile info and gamification stats
-CREATE TABLE profiles (
+CREATE TABLE IF NOT EXISTS profiles (
   id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   username TEXT UNIQUE,
   avatar_url TEXT,
@@ -26,7 +26,7 @@ CREATE TABLE profiles (
 
 -- 2. EXERCISES TABLE
 -- The "Wiki". System exercises (created_by IS NULL) and User exercises.
-CREATE TABLE exercises (
+CREATE TABLE IF NOT EXISTS exercises (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   name TEXT NOT NULL,
   muscle_group TEXT NOT NULL, -- e.g., 'chest', 'back', 'legs'
@@ -43,7 +43,7 @@ CREATE TABLE exercises (
 
 -- 3. ROUTINES TABLE
 -- Planned workouts (e.g., "Pull Day")
-CREATE TABLE routines (
+CREATE TABLE IF NOT EXISTS routines (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
@@ -56,7 +56,7 @@ CREATE TABLE routines (
 
 -- 4. ROUTINE_EXERCISES TABLE
 -- Join table for Routines <-> Exercises with target metrics
-CREATE TABLE routine_exercises (
+CREATE TABLE IF NOT EXISTS routine_exercises (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   routine_id UUID REFERENCES routines(id) ON DELETE CASCADE NOT NULL,
   exercise_id UUID REFERENCES exercises(id) ON DELETE CASCADE NOT NULL,
@@ -70,7 +70,7 @@ CREATE TABLE routine_exercises (
 
 -- 5. WORKOUT_SESSIONS TABLE
 -- The actual history of a workout performed
-CREATE TABLE workout_sessions (
+CREATE TABLE IF NOT EXISTS workout_sessions (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   user_id UUID REFERENCES profiles(id) ON DELETE CASCADE NOT NULL,
   routine_id UUID REFERENCES routines(id) ON DELETE SET NULL, -- Nullable for "Freestyle" workouts
@@ -83,7 +83,7 @@ CREATE TABLE workout_sessions (
 
 -- 6. WORKOUT_LOGS TABLE
 -- Granular data for every set performed
-CREATE TABLE workout_logs (
+CREATE TABLE IF NOT EXISTS workout_logs (
   id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
   session_id UUID REFERENCES workout_sessions(id) ON DELETE CASCADE NOT NULL,
   exercise_id UUID REFERENCES exercises(id) ON DELETE CASCADE NOT NULL,
@@ -108,54 +108,68 @@ ALTER TABLE workout_sessions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE workout_logs ENABLE ROW LEVEL SECURITY;
 
 -- Profiles Policies
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;
 CREATE POLICY "Public profiles are viewable by everyone" 
   ON profiles FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users can insert their own profile" ON profiles;
 CREATE POLICY "Users can insert their own profile" 
   ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
+DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" 
   ON profiles FOR UPDATE USING (auth.uid() = id);
 
 -- Exercises Policies
+DROP POLICY IF EXISTS "Exercises are viewable by everyone" ON exercises;
 CREATE POLICY "Exercises are viewable by everyone" 
   ON exercises FOR SELECT USING (true);
 
+DROP POLICY IF EXISTS "Users can create exercises" ON exercises;
 CREATE POLICY "Users can create exercises" 
   ON exercises FOR INSERT WITH CHECK (auth.uid() = created_by);
 
+DROP POLICY IF EXISTS "Users can update their own unverified exercises" ON exercises;
 CREATE POLICY "Users can update their own unverified exercises" 
   ON exercises FOR UPDATE USING (auth.uid() = created_by AND is_verified = FALSE);
 
 -- Routines Policies
+DROP POLICY IF EXISTS "Users can view own routines" ON routines;
 CREATE POLICY "Users can view own routines" 
   ON routines FOR SELECT USING (auth.uid() = user_id OR is_public = TRUE);
 
+DROP POLICY IF EXISTS "Users can create routines" ON routines;
 CREATE POLICY "Users can create routines" 
   ON routines FOR INSERT WITH CHECK (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can update own routines" ON routines;
 CREATE POLICY "Users can update own routines" 
   ON routines FOR UPDATE USING (auth.uid() = user_id);
 
+DROP POLICY IF EXISTS "Users can delete own routines" ON routines;
 CREATE POLICY "Users can delete own routines" 
   ON routines FOR DELETE USING (auth.uid() = user_id);
 
 -- Routine Exercises Policies (Inherit from Routine)
+DROP POLICY IF EXISTS "Users can view routine exercises for visible routines" ON routine_exercises;
 CREATE POLICY "Users can view routine exercises for visible routines" 
   ON routine_exercises FOR SELECT USING (
     EXISTS (SELECT 1 FROM routines WHERE routines.id = routine_exercises.routine_id AND (routines.user_id = auth.uid() OR routines.is_public = TRUE))
   );
 
+DROP POLICY IF EXISTS "Users can manage exercises in own routines" ON routine_exercises;
 CREATE POLICY "Users can manage exercises in own routines" 
   ON routine_exercises FOR ALL USING (
     EXISTS (SELECT 1 FROM routines WHERE routines.id = routine_exercises.routine_id AND routines.user_id = auth.uid())
   );
 
 -- Workout Sessions Policies
+DROP POLICY IF EXISTS "Users manage own sessions" ON workout_sessions;
 CREATE POLICY "Users manage own sessions" 
   ON workout_sessions FOR ALL USING (auth.uid() = user_id);
 
 -- Workout Logs Policies (Inherit from Session)
+DROP POLICY IF EXISTS "Users manage own logs" ON workout_logs;
 CREATE POLICY "Users manage own logs" 
   ON workout_logs FOR ALL USING (
     EXISTS (SELECT 1 FROM workout_sessions WHERE workout_sessions.id = workout_logs.session_id AND workout_sessions.user_id = auth.uid())
@@ -166,16 +180,27 @@ CREATE POLICY "Users manage own logs"
 -- Function to handle new user creation (Supabase Auth Hook)
 CREATE OR REPLACE FUNCTION public.handle_new_user() 
 RETURNS TRIGGER AS $$
+DECLARE
+  default_username TEXT;
 BEGIN
+  -- Fallback to part of email if username meta is missing
+  default_username := COALESCE(
+    new.raw_user_meta_data->>'username', 
+    SPLIT_PART(new.email, '@', 1)
+  );
+
   INSERT INTO public.profiles (id, username, avatar_url)
   VALUES (
     new.id, 
-    new.raw_user_meta_data->>'username', -- Assumes metadata passed from provider or client
+    default_username,
     new.raw_user_meta_data->>'avatar_url'
   );
   RETURN new;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Drop trigger if exists to allow re-running script safely
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
 -- Trigger to call the function on signup
 CREATE TRIGGER on_auth_user_created
@@ -191,5 +216,8 @@ BEGIN
 END;
 $$ language 'plpgsql';
 
+DROP TRIGGER IF EXISTS update_profiles_modtime ON profiles;
 CREATE TRIGGER update_profiles_modtime BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_routines_modtime ON routines;
 CREATE TRIGGER update_routines_modtime BEFORE UPDATE ON routines FOR EACH ROW EXECUTE PROCEDURE update_updated_at_column();

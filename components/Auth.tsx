@@ -35,7 +35,15 @@ export const Auth: React.FC = () => {
         setMessage({ type: 'success', text: 'Verifique o seu email para confirmar o registo!' });
       }
     } catch (error: any) {
-      setMessage({ type: 'error', text: error.message });
+      let errorMsg = error.message;
+      
+      // Help diagnose configuration issues
+      if (errorMsg === 'Failed to fetch') {
+        errorMsg = 'Erro de conexão. Verifique a internet ou as variáveis de ambiente (VITE_SUPABASE_URL) no Vercel.';
+        console.error('Supabase Connection Error:', error);
+      }
+      
+      setMessage({ type: 'error', text: errorMsg });
     } finally {
       setLoading(false);
     }

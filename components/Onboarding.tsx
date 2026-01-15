@@ -26,16 +26,18 @@ export const Onboarding: React.FC = () => {
     setLoading(true);
 
     try {
+      const updates: Database['public']['Tables']['profiles']['Update'] = {
+        age: parseInt(formData.age) || null,
+        weight: parseFloat(formData.weight) || null,
+        height: parseFloat(formData.height) || null,
+        gender: formData.gender,
+        experience_level: formData.experience_level,
+        fitness_goal: formData.fitness_goal,
+      };
+
       const { error } = await supabase
         .from('profiles')
-        .update({
-          age: parseInt(formData.age) || null,
-          weight: parseFloat(formData.weight) || null,
-          height: parseFloat(formData.height) || null,
-          gender: formData.gender,
-          experience_level: formData.experience_level,
-          fitness_goal: formData.fitness_goal,
-        })
+        .update(updates)
         .eq('id', user.id);
 
       if (error) throw error;
